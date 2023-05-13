@@ -228,6 +228,7 @@ NavMeshTesterTool::NavMeshTesterTool() :
 	m_nrandPoints(0),
 	m_randPointsInCircle(false),
 	m_hitResult(false),
+	m_hitRef(0),
 	m_distanceToWall(0),
 	m_sposSet(false),
 	m_eposSet(false),
@@ -911,12 +912,14 @@ void NavMeshTesterTool::recalc()
 				// No hit
 				dtVcopy(m_hitPos, m_epos);
 				m_hitResult = false;
+				m_hitRef = 0;
 			}
 			else
 			{
 				// Hit
 				dtVlerp(m_hitPos, m_spos, m_epos, t);
 				m_hitResult = true;
+				m_navQuery->findNearestPoly(m_hitPos, m_polyPickExt, &m_filter, &m_hitRef, 0);
 			}
 			// Adjust height.
 			if (m_npolys > 0)
@@ -1376,19 +1379,33 @@ void NavMeshTesterTool::handleRender()
 void NavMeshTesterTool::handleRenderOverlay(double* proj, double* model, int* view)
 {
 	GLdouble x, y, z;
+	char buf[64];
 	
 	// Draw start and end point labels
 	if (m_sposSet && gluProject((GLdouble)m_spos[0], (GLdouble)m_spos[1], (GLdouble)m_spos[2],
 								model, proj, view, &x, &y, &z))
 	{
-		imguiDrawText((int)x, (int)(y-25), IMGUI_ALIGN_CENTER, "Start", imguiRGBA(0,0,0,220));
+		snprintf(buf, sizeof(buf), "Start [%d](%.1f, %.1f, %.1f)", m_startRef, m_spos[0], m_spos[1], m_spos[2]);
+		imguiDrawText((int)x, (int)(y-25), IMGUI_ALIGN_CENTER, buf, imguiRGBA(0,0,0,220));
 	}
 	if (m_eposSet && gluProject((GLdouble)m_epos[0], (GLdouble)m_epos[1], (GLdouble)m_epos[2],
 								model, proj, view, &x, &y, &z))
 	{
-		imguiDrawText((int)x, (int)(y-25), IMGUI_ALIGN_CENTER, "End", imguiRGBA(0,0,0,220));
+		float totalCost = 0.0f;
+		for (int i = 0; i + 1 < m_nstraightPath; i++)
+			totalCost += dtVdist(&m_straightPath[i * 3], &m_straightPath[(i + 1) * 3]);
+		snprintf(buf, sizeof(buf), "End [%d](%.1f, %.1f, %.1f), Cost %.1f", m_endRef, m_epos[0], m_epos[1], m_epos[2], totalCost);
+		imguiDrawText((int)x, (int)(y-25), IMGUI_ALIGN_CENTER, buf, imguiRGBA(0,0,0,220));
 	}
 	
+	if (m_toolMode == TOOLMODE_RAYCAST && m_hitResult && 
+		gluProject((GLdouble)m_hitPos[0], (GLdouble)m_hitPos[1], (GLdouble)m_hitPos[2],
+			model, proj, view, &x, &y, &z))
+	{
+		snprintf(buf, sizeof(buf), "HitPos [%d](%.1f, %.1f, %.1f)", m_hitRef, m_hitPos[0], m_hitPos[1], m_hitPos[2]);
+		imguiDrawText((int)x, (int)(y - 25), IMGUI_ALIGN_CENTER, buf, imguiRGBA(0, 0, 0, 220));
+	}
+
 	// Tool help
 	const int h = view[3];
 	imguiDrawText(280, h-40, IMGUI_ALIGN_LEFT, "LMB+SHIFT: Set start location  LMB: Set end location", imguiRGBA(255,255,255,192));	

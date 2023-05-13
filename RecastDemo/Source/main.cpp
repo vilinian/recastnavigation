@@ -290,6 +290,11 @@ int main(int /*argc*/, char** /*argv*/)
 							origCameraEulers[1] = cameraEulers[1];
 						}
 					}
+					else if (event.button.button == SDL_BUTTON_MIDDLE)
+					{
+						rotate = false;
+						movedDuringRotate = true;
+					}
 					break;
 					
 				case SDL_MOUSEBUTTONUP:
@@ -313,6 +318,11 @@ int main(int /*argc*/, char** /*argv*/)
 							processHitTest = true;
 							processHitTestShift = (SDL_GetModState() & KMOD_SHIFT) ? true : false;
 						}
+					}
+					else if (event.button.button == SDL_BUTTON_MIDDLE)
+					{
+						rotate = false;
+						movedDuringRotate = false;
 					}
 					
 					break;
