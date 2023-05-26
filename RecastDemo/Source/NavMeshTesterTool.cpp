@@ -498,7 +498,15 @@ void NavMeshTesterTool::handleToggle()
 
 	if (m_pathIterNum == 0)
 	{
+		std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> ts = m_sample->getNowNanos();
+
 		m_navQuery->findPath(m_startRef, m_endRef, m_spos, m_epos, &m_filter, m_polys, &m_npolys, MAX_POLYS);
+
+		std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> te = m_sample->getNowNanos();
+		m_sample->getContext()->log(RC_LOG_PROGRESS, "findPath [%d,(%.1f,%.1f,%.1f)]=>[%d,(%.1f,%.1f,%.1f)] time takes: %ld - %ld",
+			m_startRef, m_spos[0], m_spos[1], m_spos[2], m_endRef, m_epos[0], m_epos[1], m_epos[2],
+			static_cast<long>(te.first.count() - ts.first.count()), static_cast<long>(te.second.count() - ts.second.count()));
+
 		m_nsmoothPath = 0;
 
 		m_pathIterPolyCount = m_npolys;
@@ -631,7 +639,6 @@ void NavMeshTesterTool::handleToggle()
 		dtVcopy(&m_smoothPath[m_nsmoothPath*3], m_iterPos);
 		m_nsmoothPath++;
 	}
-
 }
 
 void NavMeshTesterTool::handleUpdate(const float /*dt*/)
@@ -705,7 +712,14 @@ void NavMeshTesterTool::recalc()
 				   m_filter.getIncludeFlags(), m_filter.getExcludeFlags()); 
 #endif
 
+			std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> ts = m_sample->getNowNanos();
+
 			m_navQuery->findPath(m_startRef, m_endRef, m_spos, m_epos, &m_filter, m_polys, &m_npolys, MAX_POLYS);
+
+			std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> te = m_sample->getNowNanos();
+			m_sample->getContext()->log(RC_LOG_PROGRESS, "findPath [%d,(%.1f,%.1f,%.1f)]=>[%d,(%.1f,%.1f,%.1f)] time takes: %ld - %ld",
+				m_startRef, m_spos[0], m_spos[1], m_spos[2], m_endRef, m_epos[0], m_epos[1], m_epos[2],
+				static_cast<long>(te.first.count() - ts.first.count()), static_cast<long>(te.second.count() - ts.second.count()));
 
 			m_nsmoothPath = 0;
 
@@ -849,7 +863,12 @@ void NavMeshTesterTool::recalc()
 				   m_spos[0],m_spos[1],m_spos[2], m_epos[0],m_epos[1],m_epos[2],
 				   m_filter.getIncludeFlags(), m_filter.getExcludeFlags()); 
 #endif
+			std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> ts = m_sample->getNowNanos();
+
 			m_navQuery->findPath(m_startRef, m_endRef, m_spos, m_epos, &m_filter, m_polys, &m_npolys, MAX_POLYS);
+
+			std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> te = m_sample->getNowNanos();
+
 			m_nstraightPath = 0;
 			if (m_npolys)
 			{
@@ -862,6 +881,13 @@ void NavMeshTesterTool::recalc()
 				m_navQuery->findStraightPath(m_spos, epos, m_polys, m_npolys,
 											 m_straightPath, m_straightPathFlags,
 											 m_straightPathPolys, &m_nstraightPath, MAX_POLYS, m_straightPathOptions);
+
+				std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> tse = m_sample->getNowNanos();
+				m_sample->getContext()->log(RC_LOG_PROGRESS, "findstraightpath [%d,(%.1f,%.1f,%.1f)]=>[%d,(%.1f,%.1f,%.1f)],maxstraightpath[%d] time takes: %ld  %ld  %ld  -  %ld  %ld  %ld",
+					m_startRef, m_spos[0], m_spos[1], m_spos[2], m_endRef, m_epos[0], m_epos[1], m_epos[2], MAX_POLYS,
+					static_cast<long>(te.first.count() - ts.first.count()), static_cast<long>(tse.first.count() - te.first.count()), static_cast<long>(tse.first.count() - ts.first.count()),
+					static_cast<long>(te.second.count() - ts.second.count()), static_cast<long>(tse.second.count() - te.second.count()), static_cast<long>(tse.second.count() - ts.second.count())
+				);
 			}
 		}
 		else

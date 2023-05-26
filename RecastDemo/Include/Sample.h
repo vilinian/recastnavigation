@@ -19,6 +19,9 @@
 #ifndef RECASTSAMPLE_H
 #define RECASTSAMPLE_H
 
+#include <stdarg.h>
+#include <chrono>
+#include <ctime>
 #include "Recast.h"
 #include "SampleInterfaces.h"
 
@@ -140,6 +143,19 @@ public:
 	virtual ~Sample();
 	
 	void setContext(BuildContext* ctx) { m_ctx = ctx; }
+
+	BuildContext* getContext() { return m_ctx; }
+
+	std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> getNowNanos() {
+		std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+		std::chrono::nanoseconds ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
+
+		std::chrono::system_clock::time_point nowSC = std::chrono::system_clock::now();
+		std::chrono::nanoseconds nsSC = std::chrono::duration_cast<std::chrono::nanoseconds>(nowSC.time_since_epoch());
+
+		//std::clock_t ct = std::clock();
+		return std::make_pair(ns, nsSC);
+	}
 	
 	void setTool(SampleTool* tool);
 	SampleToolState* getToolState(int type) { return m_toolStates[type]; }
